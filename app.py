@@ -38,7 +38,7 @@ if api_key:
                         
                         # Generate content using gemini-2.5-flash or gemini-1.5-flash
                         response = client.models.generate_content(
-                            model='gemini-2.5-flash',
+                            model='gemini-3.8-flash',
                             contents=[video_file, prompt]
                         )
 
