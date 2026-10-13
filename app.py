@@ -1,5 +1,6 @@
 
-import streamlit as st
+
+   import streamlit as st
 import google.generativeai as genai
 import tempfile
 import os
@@ -14,6 +15,8 @@ api_key = st.sidebar.text_input("اپنی Google Gemini API Key درج کریں:
 
 if api_key:
     clean_api_key = api_key.strip()
+    
+    # New Google GenAI SDK configuration for AQ keys
     genai.configure(api_key=clean_api_key)
     
     uploaded_file = st.file_uploader("ویڈیو فائل اپلوڈ کریں (MP4, MOV, AVI)", type=["mp4", "mov", "avi"])
@@ -27,14 +30,16 @@ if api_key:
         )
 
         if st.button("میٹا ڈیٹا اور ٹیگز بنائیں"):
-            with st.spinner("ویڈیو کا تجزیہ کیا جا رہا ہے... براہ کرم انتظار کریں..."):
+            with st.spinner("ویڈیو کا تجزیہ کیا جا रहा ہے... براہ کرم انتظار کریں..."):
                 with tempfile.NamedTemporaryFile(delete=False, suffix='.mp4') as tmp_file:
                     tmp_file.write(uploaded_file.read())
                     tmp_file_path = tmp_file.name
 
                 try:
+                    # Upload video file to Gemini using Files API
                     video_file = genai.upload_file(path=tmp_file_path)
                     
+                    # Using gemini-1.5-flash
                     model = genai.GenerativeModel(model_name="gemini-1.5-flash")
                     response = model.generate_content([video_file, prompt])
 
