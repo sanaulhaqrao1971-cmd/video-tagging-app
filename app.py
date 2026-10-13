@@ -1,10 +1,9 @@
-          import streamlit as st
+import streamlit as st
 import google.generativeai as genai
 import tempfile
 import os
 
 st.set_page_config(page_title="TV Archive Video Tagging System", layout="wide")
-
 st.title("📺 TV Channel Video Metadata & Tagging System")
 st.write("Google Gemini 1.5 Flash AI کی مدد سے اپنی ویڈیوز کا خودکار میٹا ڈیٹا اور ٹیگز تیار کریں۔")
 
@@ -32,7 +31,6 @@ if api_key:
 
                 try:
                     video_file = genai.upload_file(path=tmp_file_path)
-                    
                     model = genai.GenerativeModel(model_name="gemini-1.5-flash")
                     response = model.generate_content([video_file, prompt])
 
@@ -45,4 +43,4 @@ if api_key:
                 except Exception as e:
                     st.error(f"ایرر آ گیا: {e}")
 else:
-    st.info("براہ کرم سائیڈ بار میں اپنی Gemini API Key درج کریں۔")
+    st.info("براہ کرم سائیڈ بار میں اپنی Gemini API Key درج کریں۔") 
