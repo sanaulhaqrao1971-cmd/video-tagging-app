@@ -1,5 +1,5 @@
 import streamlit as st
-import google.generativeai as genai
+from google import genai
 import tempfile
 import os
 
@@ -11,36 +11,47 @@ api_key = st.sidebar.text_input("اپنی Google Gemini API Key درج کریں:
 
 if api_key:
     clean_api_key = api_key.strip()
-    genai.configure(api_key=clean_api_key)
     
-    uploaded_file = st.file_uploader("ویڈیو فائل اپلوڈ کریں (MP4, MOV, AVI)", type=["mp4", "mov", "avi"])
-
-    if uploaded_file is not None:
-        st.video(uploaded_file)
+    try:
+        # Initialize the new genai client
+        client = genai.Client(api_key=clean_api_key)
         
-        prompt = st.text_area(
-            "پرامپٹ (Prompt):", 
-            "Provide a detailed summary, key topics, Urdu timestamps, and relevant tags for this TV video clip for archive cataloging."
-        )
+        uploaded_file = st.file_uploader("ویڈیو فائل اپلوڈ کریں (MP4, MOV, AVI)", type=["mp4", "mov", "avi"])
 
-        if st.button("میٹا ڈیٹا اور ٹیگز بنائیں"):
-            with st.spinner("ویڈیو کا تجزیہ کیا جا رہا ہے... براہ کرم انتظار کریں..."):
-                with tempfile.NamedTemporaryFile(delete=False, suffix='.mp4') as tmp_file:
-                    tmp_file.write(uploaded_file.read())
-                    tmp_file_path = tmp_file.name
+        if uploaded_file is not None:
+            st.video(uploaded_file)
+            
+            prompt = st.text_area(
+                "پرامپٹ (Prompt):", 
+                "Provide a detailed summary, key topics, Urdu timestamps, and relevant tags for this TV video clip for archive cataloging."
+            )
 
-                try:
-                    video_file = genai.upload_file(path=tmp_file_path)
-                    model = genai.GenerativeModel(model_name="gemini-1.5-flash")
-                    response = model.generate_content([video_file, prompt])
+            if st.button("میٹا ڈیٹا اور ٹیگز بنائیں"):
+                with st.spinner("ویڈیو اپلوڈ اور تجزیہ کیا جا رہا ہے... براہ کرم انتظار کریں..."):
+                    with tempfile.NamedTemporaryFile(delete=False, suffix='.mp4') as tmp_file:
+                        tmp_file.write(uploaded_file.read())
+                        tmp_file_path = tmp_file.name
 
-                    st.success("تجزیہ مکمل ہو گیا!")
-                    st.markdown("### 📝 تیار شدہ میٹا ڈیٹا:")
-                    st.write(response.text)
+                    try:
+                        # Upload file using the new files API
+                        video_file = client.files.upload(file=tmp_file_path)
+                        
+                        # Generate content using gemini-2.5-flash or gemini-1.5-flash
+                        response = client.models.generate_content(
+                            model='gemini-1.5-flash',
+                            contents=[video_file, prompt]
+                        )
 
-                    os.remove(tmp_file_path)
+                        st.success("تجزیہ مکمل ہو گیا!")
+                        st.markdown("### 📝 تیار شدہ میٹا ڈیٹا:")
+                        st.write(response.text)
 
-                except Exception as e:
-                    st.error(f"ایرر آ گیا: {e}")
+                        os.remove(tmp_file_path)
+
+                    except Exception as inner_e:
+                        st.error(f"پروسیسنگ کا ایرر: {inner_e}")
+
+    except Exception as e:
+        st.error(f"API Key کنفیگریشن کا ایرر: {e}")
 else:
-    st.info("براہ کرم سائیڈ بار میں اپنی Gemini API Key درج کریں۔") 
+    st.info("براہ کرم سائیڈ بار میں اپنی Gemini API Key درج کریں۔")
