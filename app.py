@@ -3,8 +3,8 @@ from google import genai
 import tempfile
 import os
 
-st.set_page_config(page_title="TV Archive Video Tagging System", layout="wide")
-st.title("📺 TV Channel Video Metadata & Tagging System")
+st.set_page_config(page_title="24 News Channel Video Tagging System", layout="wide")
+st.title("📺 24 News Channel Video Metadata & Tagging System")
 st.write("ویڈیو اپلوڈ کریں، خودکار ٹیگز کاپی کریں اور اپنے لوکل آرکائیو میں محفوظ کریں۔")
 
 # Streamlit Secrets سے API Key حاصل کرنا
@@ -26,7 +26,7 @@ if api_key:
             
             prompt = st.text_area(
                 "پرامپٹ (Prompt):", 
-                "Provide a detailed summary, key topics, English timestamps, and relevant tags for this TV video clip for archive cataloging."
+                "Provide a detailed summary, key topics, English timestamps, and relevant tags for this TV video clip for 24 News archive cataloging."
             )
 
             if st.button("میٹا ڈیٹا اور ٹیگز بنائیں"):
@@ -47,7 +47,7 @@ if api_key:
                             contents=[video_file, prompt]
                         )
 
-                        st.success("تجزیہ مکمل ہو گیا! نیچے دیے گئے بٹن سے ٹیگز کاپی کریں۔")
+                        st.success("تجزیہ مکمل ہو گیا! نیچے دیے گئے باکس سے ٹیگز کاپی کریں۔")
                         
                         # 4. کاپی کرنے کے لیے آسان باکس
                         st.markdown("### 📝 تیار شدہ میٹا ڈیٹا و ٹیگز (کاپی کرنے کے لیے):")
