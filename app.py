@@ -44,7 +44,7 @@ if api_key:
                         
                         # 3. صرف انگریزی ٹیگز کی تیاری
                         response = client.models.generate_content(
-                            model='gemini-2.5-flash',
+                            model='gemini-3.5-flash',
                             contents=[video_file, prompt]
                         )
 
