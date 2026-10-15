@@ -5,13 +5,13 @@ import os
 
 st.set_page_config(page_title="24 News Channel Video Tagging System", layout="wide")
 st.title("📺 24 News Channel Video Metadata & Tagging System")
-st.write("ویڈیو اپلوڈ کریں، صرف خودکار ٹیگز حاصل کریں اور اپنے لوکل آرکائیو میں محفوظ کریں۔")
+st.write("Upload video, get automated English tags instantly, and save them to your local archive.")
 
 # Streamlit Secrets سے API Key حاصل کرنا
 api_key = st.secrets.get("GEMINI_API_KEY")
 
 if not api_key:
-    api_key = st.sidebar.text_input("اپنی Google Gemini API Key درج کریں:", type="password")
+    api_key = st.sidebar.text_input("Enter your Google Gemini API Key:", type="password")
 
 if api_key:
     clean_api_key = api_key.strip()
@@ -19,19 +19,19 @@ if api_key:
     try:
         client = genai.Client(api_key=clean_api_key)
         
-        uploaded_file = st.file_uploader("ویڈیو فائل اپلوڈ کریں (MP4, MOV, AVI)", type=["mp4", "mov", "avi"])
+        uploaded_file = st.file_uploader("Upload video file (MP4, MOV, AVI)", type=["mp4", "mov", "avi"])
 
         if uploaded_file is not None:
             st.video(uploaded_file)
             
-            # یہاں پرامپٹ کو صرف ٹیگز تک محدود کر دیا گیا ہے
+            # پرامپٹ میں صرف انگریزی ٹیگز کا حکم دیا گیا ہے
             prompt = st.text_area(
-                "پرامپٹ (Prompt):", 
-                "Generate only comma-separated relevant tags for this TV video clip for 24 News archive cataloging. Do not include any summary, key topics, or timestamps."
+                "Prompt:", 
+                "Generate only comma-separated relevant tags in English for this TV video clip for 24 News archive cataloging. Do not include any summary, key topics, or timestamps."
             )
 
-            if st.button("صرف ٹیگز بنائیں"):
-                with st.spinner("ویڈیو اپلوڈ اور پروسیس ہو رہی ہے..."):
+            if st.button("Generate English Tags"):
+                with st.spinner("Uploading and processing video..."):
                     # 1. ٹیمپریری فائل بنانا
                     with tempfile.NamedTemporaryFile(delete=False, suffix='.mp4') as tmp_file:
                         tmp_file.write(uploaded_file.read())
@@ -42,20 +42,20 @@ if api_key:
                         # 2. گوگل سرور پر اپلوڈ
                         video_file = client.files.upload(file=tmp_file_path)
                         
-                        # 3. صرف ٹیگز کی تیاری
+                        # 3. صرف انگریزی ٹیگز کی تیاری
                         response = client.models.generate_content(
                             model='gemini-3.8-flash',
                             contents=[video_file, prompt]
                         )
 
-                        st.success("ٹیگز تیار ہو گئے! نیچے دیے گئے باکس سے کاپی کریں۔")
+                        st.success("Tags generated successfully! Copy the tags from the box below.")
                         
                         # 4. کاپی کرنے کے لیے آسان باکس
-                        st.markdown("### 📝 تیار شدہ ٹیگز (کاپی کرنے کے لیے):")
+                        st.markdown("### 📝 Generated Tags (Ready to Copy):")
                         st.code(response.text, language="text")
 
                     except Exception as inner_e:
-                        st.error(f"پروسیسنگ کا ایرر: {inner_e}")
+                        st.error(f"Processing error: {inner_e}")
 
                     finally:
                         # 5. خودکار صفائی (سرور اور لوکل دونوں جگہ سے ویڈیو ڈیلیٹ کرنا)
@@ -69,6 +69,6 @@ if api_key:
                             os.remove(tmp_file_path)
 
     except Exception as e:
-        st.error(f"API Key کنفیگریشن کا ایرر: {e}")
+        st.error(f"API Key configuration error: {e}")
 else:
-    st.warning("براہ کرم Streamlit Secrets میں GEMINI_API_KEY شامل کریں یا سائیڈ بار میں درج کریں۔")
+    st.warning("Please add GEMINI_API_KEY in Streamlit Secrets or enter it in the sidebar.")
