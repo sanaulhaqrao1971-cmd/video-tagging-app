@@ -2,6 +2,7 @@ import streamlit as st
 from google import genai
 import tempfile
 import os
+import time
 
 st.set_page_config(page_title="24 News Channel Video Tagging System", layout="wide")
 st.title("📺 24 News Channel Video Metadata & Tagging System")
@@ -24,7 +25,7 @@ if api_key:
         if uploaded_file is not None:
             st.video(uploaded_file)
             
-            # پرامپٹ میں صرف انگریزی ٹیگز کا حکم دیا گیا ہے
+            # پرامپٹ
             prompt = st.text_area(
                 "Prompt:", 
                 "Generate only comma-separated relevant tags in English for this TV video clip for 24 News archive cataloging. Do not include any summary, key topics, or timestamps."
@@ -42,11 +43,21 @@ if api_key:
                         # 2. گوگل سرور پر اپلوڈ
                         video_file = client.files.upload(file=tmp_file_path)
                         
-                        # 3. صرف انگریزی ٹیگز کی تیاری
-                        response = client.models.generate_content(
-                            model='gemini-3.5-flash',
-                            contents=[video_file, prompt]
-                        )
+                        # 3. آٹو ری ٹرائی لاجک (تاکہ سرور بزی ہونے پر ایرر نہ آئے)
+                        response = None
+                        max_retries = 3
+                        for attempt in range(max_retries):
+                            try:
+                                response = client.models.generate_content(
+                                    model='gemini-3.8-flash',
+                                    contents=[video_file, prompt]
+                                )
+                                break
+                            except Exception as e:
+                                if "503" in str(e) and attempt < max_retries - 1:
+                                    time.sleep(3) # 3 سیکنڈ انتظار کر کے دوبارہ کوشش کرے گا
+                                else:
+                                    raise e
 
                         st.success("Tags generated successfully! Copy the tags from the box below.")
                         
