@@ -5,9 +5,9 @@ import os
 
 st.set_page_config(page_title="TV Archive Video Tagging System", layout="wide")
 st.title("📺 TV Channel Video Metadata & Tagging System")
-st.write("Google Gemini AI کی مدد سے اپنی ویڈیوز کا خودکار میٹا ڈیٹا اور ٹیگز تیار کریں۔")
+st.write("ویڈیو اپلوڈ کریں، خودکار ٹیگز کاپی کریں اور اپنے لوکل آرکائیو میں محفوظ کریں۔")
 
-# اسٹریملٹ سیکریٹس سے خود بخود API Key حاصل کرنا
+# Streamlit Secrets سے API Key حاصل کرنا
 api_key = st.secrets.get("GEMINI_API_KEY")
 
 if not api_key:
@@ -30,29 +30,44 @@ if api_key:
             )
 
             if st.button("میٹا ڈیٹا اور ٹیگز بنائیں"):
-                with st.spinner("ویڈیو اپلوڈ اور تجزیہ کیا جا رہا ہے... براہ کرم انتظار کریں..."):
+                with st.spinner("ویڈیو اپلوڈ اور پروسیس ہو رہی ہے..."):
+                    # 1. ٹیمپریری فائل بنانا
                     with tempfile.NamedTemporaryFile(delete=False, suffix='.mp4') as tmp_file:
                         tmp_file.write(uploaded_file.read())
                         tmp_file_path = tmp_file.name
 
+                    video_file = None
                     try:
+                        # 2. گوگل سرور پر اپلوڈ
                         video_file = client.files.upload(file=tmp_file_path)
                         
+                        # 3. ٹیگز اور میٹا ڈیٹا کی تیاری
                         response = client.models.generate_content(
                             model='gemini-2.5-flash',
                             contents=[video_file, prompt]
                         )
 
-                        st.success("تجزیہ مکمل ہو گیا!")
-                        st.markdown("### 📝 تیار شدہ میٹا ڈیٹا:")
-                        st.write(response.text)
-
-                        os.remove(tmp_file_path)
+                        st.success("تجزیہ مکمل ہو گیا! نیچے دیے گئے بٹن سے ٹیگز کاپی کریں۔")
+                        
+                        # 4. کاپی کرنے کے لیے آسان باکس
+                        st.markdown("### 📝 تیار شدہ میٹا ڈیٹا و ٹیگز (کاپی کرنے کے لیے):")
+                        st.code(response.text, language="text")
 
                     except Exception as inner_e:
                         st.error(f"پروسیسنگ کا ایرر: {inner_e}")
 
+                    finally:
+                        # 5. خودکار صفائی (سرور اور لوکل دونوں جگہ سے ویڈیو ڈیلیٹ کرنا)
+                        if video_file:
+                            try:
+                                client.files.delete(name=video_file.name)
+                            except Exception:
+                                pass
+                        
+                        if os.path.exists(tmp_file_path):
+                            os.remove(tmp_file_path)
+
     except Exception as e:
         st.error(f"API Key کنفیگریشن کا ایرر: {e}")
 else:
-    st.warning("براہ کرم اسٹریملٹ سیکریٹس میں GEMINI_API_KEY شامل کریں یا سائیڈ بار میں درج کریں۔")
+    st.warning("براہ کرم Streamlit Secrets میں GEMINI_API_KEY شامل کریں یا سائیڈ بار میں درج کریں۔")
