@@ -5,7 +5,7 @@ import os
 
 st.set_page_config(page_title="24 News Channel Video Tagging System", layout="wide")
 st.title("📺 24 News Channel Video Metadata & Tagging System")
-st.write("ویڈیو اپلوڈ کریں، خودکار ٹیگز کاپی کریں اور اپنے لوکل آرکائیو میں محفوظ کریں۔")
+st.write("ویڈیو اپلوڈ کریں، صرف خودکار ٹیگز حاصل کریں اور اپنے لوکل آرکائیو میں محفوظ کریں۔")
 
 # Streamlit Secrets سے API Key حاصل کرنا
 api_key = st.secrets.get("GEMINI_API_KEY")
@@ -24,12 +24,13 @@ if api_key:
         if uploaded_file is not None:
             st.video(uploaded_file)
             
+            # یہاں پرامپٹ کو صرف ٹیگز تک محدود کر دیا گیا ہے
             prompt = st.text_area(
                 "پرامپٹ (Prompt):", 
-                "Provide a detailed summary, key topics, English timestamps, and relevant tags for this TV video clip for 24 News archive cataloging."
+                "Generate only comma-separated relevant tags for this TV video clip for 24 News archive cataloging. Do not include any summary, key topics, or timestamps."
             )
 
-            if st.button("میٹا ڈیٹا اور ٹیگز بنائیں"):
+            if st.button("صرف ٹیگز بنائیں"):
                 with st.spinner("ویڈیو اپلوڈ اور پروسیس ہو رہی ہے..."):
                     # 1. ٹیمپریری فائل بنانا
                     with tempfile.NamedTemporaryFile(delete=False, suffix='.mp4') as tmp_file:
@@ -41,16 +42,16 @@ if api_key:
                         # 2. گوگل سرور پر اپلوڈ
                         video_file = client.files.upload(file=tmp_file_path)
                         
-                        # 3. ٹیگز اور میٹا ڈیٹا کی تیاری
+                        # 3. صرف ٹیگز کی تیاری
                         response = client.models.generate_content(
-                            model='gemini-3.5-flash',
+                            model='gemini-3.8-flash',
                             contents=[video_file, prompt]
                         )
 
-                        st.success("تجزیہ مکمل ہو گیا! نیچے دیے گئے باکس سے ٹیگز کاپی کریں۔")
+                        st.success("ٹیگز تیار ہو گئے! نیچے دیے گئے باکس سے کاپی کریں۔")
                         
                         # 4. کاپی کرنے کے لیے آسان باکس
-                        st.markdown("### 📝 تیار شدہ میٹا ڈیٹا و ٹیگز (کاپی کرنے کے لیے):")
+                        st.markdown("### 📝 تیار شدہ ٹیگز (کاپی کرنے کے لیے):")
                         st.code(response.text, language="text")
 
                     except Exception as inner_e:
