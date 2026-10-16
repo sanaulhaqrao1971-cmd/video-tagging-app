@@ -14,13 +14,10 @@ st.set_page_config(
 # Professional Corporate Dashboard Custom CSS Styling
 st.markdown("""
     <style>
-    /* Global Background */
     .stApp {
         background-color: #0f172a;
         color: #f8fafc;
     }
-    
-    /* Main Headers */
     h1 {
         color: #ffffff !important;
         font-family: 'Helvetica Neue', sans-serif;
@@ -28,19 +25,14 @@ st.markdown("""
         font-size: 2.4rem;
         letter-spacing: -0.5px;
     }
-    
     h3 {
         color: #38bdf8 !important;
     }
-
-    /* Subtitle & Text Styling */
     .upload-text {
         color: #94a3b8;
         font-size: 1.15rem;
         margin-bottom: 1.5rem;
     }
-
-    /* Card Containers / File Uploader styling */
     div[data-testid="stFileUploader"] {
         background-color: #1e293b;
         border: 2px dashed #334155;
@@ -48,20 +40,15 @@ st.markdown("""
         padding: 20px;
         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
     }
-    
     div[data-testid="stFileUploader"]:hover {
         border-color: #38bdf8;
     }
-
-    /* Text Area Styling */
     textarea {
         background-color: #1e293b !important;
         color: #f8fafc !important;
         border: 1px solid #334155 !important;
         border-radius: 8px !important;
     }
-
-    /* Professional Button Styling */
     .stButton>button {
         width: 100%;
         background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
@@ -74,14 +61,11 @@ st.markdown("""
         box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3);
         transition: all 0.3s ease;
     }
-    
     .stButton>button:hover {
         background: linear-gradient(135deg, #0369a1 0%, #075985 100%);
         box-shadow: 0 6px 16px rgba(2, 132, 199, 0.5);
         transform: translateY(-1px);
     }
-
-    /* Code Box / Output Box */
     pre {
         background-color: #1e293b !important;
         border: 1px solid #334155 !important;
@@ -119,7 +103,7 @@ if api_key:
             )
 
             if st.button("Generate English Tags"):
-                with st.spinner("Server is busy, trying multiple attempts to connect..."):
+                with st.spinner("Processing video & managing rate limits..."):
                     # 1. ٹیمپریری فائل بنانا
                     with tempfile.NamedTemporaryFile(delete=False, suffix='.mp4') as tmp_file:
                         tmp_file.write(uploaded_file.read())
@@ -130,7 +114,7 @@ if api_key:
                         # 2. گوگل سرور پر اپلوڈ
                         video_file = client.files.upload(file=tmp_file_path)
                         
-                        # 3. طاقتور آٹو ری ٹرائی لاجک
+                        # 3. سمارٹ ری ٹرائی لوپ جو 503 اور 429 (Quota) दोनों को ہینڈل کرے گا
                         response = None
                         max_retries = 5
                         for attempt in range(max_retries):
@@ -142,8 +126,8 @@ if api_key:
                                 break
                             except Exception as e:
                                 error_str = str(e)
-                                if ("503" in error_str or "UNAVAILABLE" in error_str) and attempt < max_retries - 1:
-                                    sleep_time = (attempt + 1) * 4
+                                if ("503" in error_str or "429" in error_str or "UNAVAILABLE" in error_str or "RESOURCE_EXHAUSTED" in error_str) and attempt < max_retries - 1:
+                                    sleep_time = (attempt + 1) * 6 # کوٹہ یا بزی ہونے پر زیادہ انتظار (6, 12, 18, 24 سیکنڈ)
                                     time.sleep(sleep_time)
                                 else:
                                     raise e
