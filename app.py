@@ -129,5 +129,3 @@ if api_key:
         st.error(f"API Key configuration error: {e}")
 else:
     st.warning("Please add GEMINI_API_KEY in Streamlit Secrets or enter it in the sidebar.")
-
-<FollowUp>Would you like to adjust any specific color tones (such as matching your exact corporate studio branding) or add more features?</FollowUp>
