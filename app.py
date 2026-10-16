@@ -103,7 +103,7 @@ if api_key:
             )
 
             if st.button("Generate English Tags"):
-                with st.spinner("Processing video & managing rate limits..."):
+                with st.spinner("Server is experiencing high traffic. Retrying smartly..."):
                     # 1. ٹیمپریری فائل بنانا
                     with tempfile.NamedTemporaryFile(delete=False, suffix='.mp4') as tmp_file:
                         tmp_file.write(uploaded_file.read())
@@ -114,9 +114,9 @@ if api_key:
                         # 2. گوگل سرور پر اپلوڈ
                         video_file = client.files.upload(file=tmp_file_path)
                         
-                        # 3. سمارٹ ری ٹرائی لوپ جو 503 اور 429 (Quota) दोनों को ہینڈل کرے گا
+                        # 3. طویل اور محفوظ آٹو ری ٹرائی لوپ (بڑھایا گیا انتظار کا وقت)
                         response = None
-                        max_retries = 5
+                        max_retries = 6
                         for attempt in range(max_retries):
                             try:
                                 response = client.models.generate_content(
@@ -127,7 +127,7 @@ if api_key:
                             except Exception as e:
                                 error_str = str(e)
                                 if ("503" in error_str or "429" in error_str or "UNAVAILABLE" in error_str or "RESOURCE_EXHAUSTED" in error_str) and attempt < max_retries - 1:
-                                    sleep_time = (attempt + 1) * 6 # کوٹہ یا بزی ہونے پر زیادہ انتظار (6, 12, 18, 24 سیکنڈ)
+                                    sleep_time = (attempt + 1) * 8 # ہر بار 8، 16، 24، 32، 40 سیکنڈ انتظار کرے گا
                                     time.sleep(sleep_time)
                                 else:
                                     raise e
