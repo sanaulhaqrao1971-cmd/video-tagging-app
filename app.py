@@ -3,7 +3,7 @@ import whisper
 import tempfile
 import os
 import re
-from collections:: import Counter
+from collections import Counter
 
 # Page Configuration
 st.set_page_config(
