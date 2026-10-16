@@ -1,12 +1,13 @@
 import streamlit as st
-from google import genai
+import whisper
 import tempfile
 import os
-import time
+import re
+from collections:: import Counter
 
 # Page Configuration
 st.set_page_config(
-    page_title="24 News Channel Video Tagging System", 
+    page_title="24 News Channel Unlimited Tagging System", 
     page_icon="📺", 
     layout="wide"
 )
@@ -43,12 +44,6 @@ st.markdown("""
     div[data-testid="stFileUploader"]:hover {
         border-color: #38bdf8;
     }
-    textarea {
-        background-color: #1e293b !important;
-        color: #f8fafc !important;
-        border: 1px solid #334155 !important;
-        border-radius: 8px !important;
-    }
     .stButton>button {
         width: 100%;
         background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
@@ -76,83 +71,52 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # App Header
-st.title("📺 24 News Channel Video Metadata & Tagging System")
-st.markdown('<p class="upload-text">Upload video, get automated English tags instantly, and save them to your local archive.</p>', unsafe_allow_html=True)
+st.title("📺 24 News Channel Unlimited Local Tagging System")
+st.markdown('<p class="upload-text">100% Free & Unlimited video tagging using local AI (Whisper). No API limits!</p>', unsafe_allow_html=True)
 
-# Streamlit Secrets سے API Key حاصل کرنا
-api_key = st.secrets.get("GEMINI_API_KEY")
+# Load Local Whisper Model
+@st.cache_resource
+def load_whisper_model():
+    return whisper.load_model("tiny")
 
-if not api_key:
-    api_key = st.sidebar.text_input("Enter your Google Gemini API Key:", type="password")
+with st.spinner("لوکل اے آئی ماڈل لوڈ ہو رہا ہے... براہ کرم انتظار کریں۔"):
+    ai_model = load_whisper_model()
 
-if api_key:
-    clean_api_key = api_key.strip()
+uploaded_file = st.file_uploader("ویڈیو فائل اپ لوڈ کریں (MP4, MOV, AVI)", type=["mp4", "mov", "avi"])
+
+if uploaded_file is not None:
+    st.video(uploaded_file)
     
-    try:
-        client = genai.Client(api_key=clean_api_key)
-        
-        uploaded_file = st.file_uploader("Upload video file (MP4, MOV, AVI)", type=["mp4", "mov", "avi"])
+    if st.button("انگریزی ٹیگز تیار کریں (Generate Tags)"):
+        with st.spinner("ویڈیو کو لوکللی پروسیس کیا جا رہا ہے..."):
+            with tempfile.NamedTemporaryFile(delete=False, suffix='.mp4') as tmp_file:
+                tmp_file.write(uploaded_file.read())
+                tmp_file_path = tmp_file.name
 
-        if uploaded_file is not None:
-            st.video(uploaded_file)
-            
-            # پرامپٹ
-            prompt = st.text_area(
-                "Prompt:", 
-                "Generate only comma-separated relevant tags in English for this TV video clip for 24 News archive cataloging. Do not include any summary, key topics, or timestamps."
-            )
+            try:
+                # Whisper کے ذریعے آڈیو کو ٹیکسٹ میں بدلنا
+                result = ai_model.transcribe(tmp_file_path)
+                transcript_text = result.get("text", "")
 
-            if st.button("Generate English Tags"):
-                with st.spinner("Server is experiencing high traffic. Retrying smartly..."):
-                    # 1. ٹیمپریری فائل بنانا
-                    with tempfile.NamedTemporaryFile(delete=False, suffix='.mp4') as tmp_file:
-                        tmp_file.write(uploaded_file.read())
-                        tmp_file_path = tmp_file.name
+                # ٹیکسٹ سے خودکار اہم انگریزی الفاظ نکالنا
+                words = re.findall(r'\b[A-Za-z]{4,}\b', transcript_text)
+                stop_words = {"this", "that", "with", "from", "your", "have", "will", "what", "about", "there", "the", "and", "for", "are", "but", "not", "you", "all", "can", "was", "they", "one", "has", "her", "his", "were", "been"}
+                filtered_words = [w.lower() for w in words if w.lower() not in stop_words]
+                
+                common_words = [word for word, count in Counter(filtered_words).most_common(12)]
+                tags_string = ", ".join(common_words)
 
-                    video_file = None
-                    try:
-                        # 2. گوگل سرور پر اپلوڈ
-                        video_file = client.files.upload(file=tmp_file_path)
-                        
-                        # 3. طویل اور محفوظ آٹو ری ٹرائی لوپ (بڑھایا گیا انتظار کا وقت)
-                        response = None
-                        max_retries = 6
-                        for attempt in range(max_retries):
-                            try:
-                                response = client.models.generate_content(
-                                    model='gemini-3.8-flash',
-                                    contents=[video_file, prompt]
-                                )
-                                break
-                            except Exception as e:
-                                error_str = str(e)
-                                if ("503" in error_str or "429" in error_str or "UNAVAILABLE" in error_str or "RESOURCE_EXHAUSTED" in error_str) and attempt < max_retries - 1:
-                                    sleep_time = (attempt + 1) * 8 # ہر بار 8، 16، 24، 32، 40 سیکنڈ انتظار کرے گا
-                                    time.sleep(sleep_time)
-                                else:
-                                    raise e
+                st.success("ٹیگز کامیابی سے تیار ہو گئے ہیں!")
+                
+                st.markdown("### 📝 جنریٹ شدہ ٹیگز:")
+                st.code(tags_string, language="text")
 
-                        st.success("Tags generated successfully! Copy the tags from the box below.")
-                        
-                        # 4. کاپی کرنے کے لیے آسان باکس
-                        st.markdown("### 📝 Generated Tags (Ready to Copy):")
-                        st.code(response.text, language="text")
+                with st.expander("مکمل آڈیو ٹرانسکرپٹ دیکھیں"):
+                    st.write(transcript_text)
 
-                    except Exception as inner_e:
-                        st.error(f"Processing error: {inner_e}")
+            except Exception as e:
+                st.error(f"پروسیسنگ میں خرابی: {e}")
 
-                    finally:
-                        # 5. خودکار صفائی
-                        if video_file:
-                            try:
-                                client.files.delete(name=video_file.name)
-                            except Exception:
-                                pass
-                        
-                        if os.path.exists(tmp_file_path):
-                            os.remove(tmp_file_path)
-
-    except Exception as e:
-        st.error(f"API Key configuration error: {e}")
-else:
-    st.warning("Please add GEMINI_API_KEY in Streamlit Secrets or enter it in the sidebar.")
+            finally:
+                if os.path.exists(tmp_file_path):
+                    os.remove(tmp_file_path)
