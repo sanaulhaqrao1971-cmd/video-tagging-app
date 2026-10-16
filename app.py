@@ -15,6 +15,7 @@ st.set_page_config(
 # Professional Corporate Dashboard Custom CSS Styling
 st.markdown("""
     <style>
+    /* Background & Main App */
     .stApp {
         background-color: #0f172a;
         color: #f8fafc;
@@ -34,6 +35,8 @@ st.markdown("""
         font-size: 1.15rem;
         margin-bottom: 1.5rem;
     }
+
+    /* File Uploader Container & Labels Fix */
     div[data-testid="stFileUploader"] {
         background-color: #1e293b;
         border: 2px dashed #334155;
@@ -44,6 +47,31 @@ st.markdown("""
     div[data-testid="stFileUploader"]:hover {
         border-color: #38bdf8;
     }
+    
+    /* Upload Label Text Color Fix (ویڈیو فائل اپ لوڈ کریں - Title Fix) */
+    div[data-testid="stFileUploader"] label, 
+    div[data-testid="stWidgetLabel"] p,
+    .stFileUploader label p {
+        color: #ffffff !important;
+        font-size: 1.2rem !important;
+        font-weight: 600 !important;
+    }
+    
+    /* Upload Box Subtext (200MB per file...) */
+    div[data-testid="stFileUploader"] small,
+    div[data-testid="stFileUploader"] span {
+        color: #94a3b8 !important;
+    }
+    
+    /* Upload Button Inside Widget */
+    div[data-testid="stFileUploader"] button {
+        background-color: #38bdf8 !important;
+        color: #0f172a !important;
+        font-weight: bold !important;
+        border: none !important;
+    }
+
+    /* Main Action Button Styling */
     .stButton>button {
         width: 100%;
         background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
@@ -61,6 +89,8 @@ st.markdown("""
         box-shadow: 0 6px 16px rgba(2, 132, 199, 0.5);
         transform: translateY(-1px);
     }
+    
+    /* Output Box */
     pre {
         background-color: #1e293b !important;
         border: 1px solid #334155 !important;
@@ -82,6 +112,7 @@ def load_whisper_model():
 with st.spinner("لوکل اے آئی ماڈل لوڈ ہو رہا ہے... براہ کرم انتظار کریں۔"):
     ai_model = load_whisper_model()
 
+# Video Uploader Widget
 uploaded_file = st.file_uploader("ویڈیو فائل اپ لوڈ کریں (MP4, MOV, AVI)", type=["mp4", "mov", "avi"])
 
 if uploaded_file is not None:
