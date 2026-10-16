@@ -11,41 +11,82 @@ st.set_page_config(
     layout="wide"
 )
 
-# Professional Custom CSS Styling
+# Professional Corporate Dashboard Custom CSS Styling
 st.markdown("""
     <style>
-    .main {
-        background-color: #f4f6f9;
-    }
+    /* Global Background */
     .stApp {
-        max-width: 1200px;
-        margin: 0 auto;
+        background-color: #0f172a;
+        color: #f8fafc;
     }
+    
+    /* Main Headers */
     h1 {
-        color: #1f2937;
+        color: #ffffff !important;
         font-family: 'Helvetica Neue', sans-serif;
         font-weight: 700;
-        font-size: 2.2rem;
+        font-size: 2.4rem;
+        letter-spacing: -0.5px;
     }
+    
+    h3 {
+        color: #38bdf8 !important;
+    }
+
+    /* Subtitle & Text Styling */
     .upload-text {
-        color: #4b5563;
-        font-size: 1.1rem;
-        margin-bottom: 1rem;
+        color: #94a3b8;
+        font-size: 1.15rem;
+        margin-bottom: 1.5rem;
     }
-    /* Customizing buttons */
+
+    /* Card Containers / File Uploader styling */
+    div[data-testid="stFileUploader"] {
+        background-color: #1e293b;
+        border: 2px dashed #334155;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+    
+    div[data-testid="stFileUploader"]:hover {
+        border-color: #38bdf8;
+    }
+
+    /* Text Area Styling */
+    textarea {
+        background-color: #1e293b !important;
+        color: #f8fafc !important;
+        border: 1px solid #334155 !important;
+        border-radius: 8px !important;
+    }
+
+    /* Professional Button Styling */
     .stButton>button {
         width: 100%;
-        background-color: #2563eb;
+        background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
         color: white;
         font-weight: 600;
-        border-radius: 8px;
-        padding: 0.6rem 1rem;
+        font-size: 1.1rem;
+        border-radius: 10px;
+        padding: 0.75rem 1rem;
         border: none;
+        box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3);
         transition: all 0.3s ease;
     }
+    
     .stButton>button:hover {
-        background-color: #1d4ed8;
-        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+        background: linear-gradient(135deg, #0369a1 0%, #075985 100%);
+        box-shadow: 0 6px 16px rgba(2, 132, 199, 0.5);
+        transform: translateY(-1px);
+    }
+
+    /* Code Box / Output Box */
+    pre {
+        background-color: #1e293b !important;
+        border: 1px solid #334155 !important;
+        border-radius: 10px !important;
+        color: #38bdf8 !important;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -78,7 +119,7 @@ if api_key:
             )
 
             if st.button("Generate English Tags"):
-                with st.spinner("Uploading and processing video..."):
+                with st.spinner("Server is busy, trying multiple attempts to connect..."):
                     # 1. ٹیمپریری فائل بنانا
                     with tempfile.NamedTemporaryFile(delete=False, suffix='.mp4') as tmp_file:
                         tmp_file.write(uploaded_file.read())
@@ -89,9 +130,9 @@ if api_key:
                         # 2. گوگل سرور پر اپلوڈ
                         video_file = client.files.upload(file=tmp_file_path)
                         
-                        # 3. آٹو ری ٹرائی لاجک
+                        # 3. طاقتور آٹو ری ٹرائی لاجک
                         response = None
-                        max_retries = 3
+                        max_retries = 5
                         for attempt in range(max_retries):
                             try:
                                 response = client.models.generate_content(
@@ -100,8 +141,10 @@ if api_key:
                                 )
                                 break
                             except Exception as e:
-                                if "503" in str(e) and attempt < max_retries - 1:
-                                    time.sleep(3)
+                                error_str = str(e)
+                                if ("503" in error_str or "UNAVAILABLE" in error_str) and attempt < max_retries - 1:
+                                    sleep_time = (attempt + 1) * 4
+                                    time.sleep(sleep_time)
                                 else:
                                     raise e
 
