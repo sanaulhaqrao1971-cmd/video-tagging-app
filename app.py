@@ -28,7 +28,7 @@ st.markdown("""
     .upload-text {
         color: #64748b;
         font-size: 1.05rem;
-        margin-bottom: 1rem;
+        margin-bottom: 1.0rem;
     }
     .stButton>button {
         background-color: #ffffff;
@@ -77,37 +77,44 @@ if uploaded_file is not None:
     )
 
     if st.button("Generate English Tags"):
-        with st.spinner("Processing video & generating tags..."):
+        with st.spinner("Processing video & generating scene tags..."):
+            file_name = uploaded_file.name
             with tempfile.NamedTemporaryFile(delete=False, suffix='.mp4') as tmp_file:
                 tmp_file.write(uploaded_file.read())
                 tmp_file_path = tmp_file.name
 
             try:
-                # Whisper کے ذریعے آڈیو کو ٹیکسٹ میں بدلنا
+                # Whisper کے ذریعے آڈیو ٹرانسکرپشن
                 result = ai_model.transcribe(tmp_file_path)
                 transcript_text = result.get("text", "").strip()
 
-                # اگر ٹرانسکرپٹ موجود ہو تو الفاظ نکالیں، ورنہ ڈیفالٹ ٹیگ دیں
-                if transcript_text:
-                    words = re.findall(r'\b[A-Za-z]{3,}\b', transcript_text)
-                    stop_words = {"this", "that", "with", "from", "your", "have", "will", "what", "about", "there", "the", "and", "for", "are", "but", "not", "you", "all", "can", "was", "they", "one", "has", "her", "his", "were", "been"}
-                    filtered_words = [w.lower() for w in words if w.lower() not in stop_words]
-                    
-                    if filtered_words:
-                        common_words = [word for word, count in Counter(filtered_words).most_common(15)]
-                        tags_string = ", ".join(common_words)
-                    else:
-                        tags_string = transcript_text
+                # فائل کے نام سے الفاظ نکالنا (جیسے case, florida وغیرہ)
+                name_words = re.findall(r'[A-Za-z]+', file_name.replace('.mp4', '').replace('.mov', ''))
+                
+                # آڈیو ٹیکسٹ سے الفاظ نکالنا
+                audio_words = re.findall(r'\b[A-Za-z]{3,}\b', transcript_text)
+                stop_words = {"this", "that", "with", "from", "your", "have", "will", "what", "about", "there", "the", "and", "for", "are", "but", "not", "you", "all", "can", "was", "they", "one", "has", "her", "his", "were", "been", "mp4"}
+                
+                combined_words = name_words + audio_words
+                filtered_words = [w.lower() for w in combined_words if w.lower() not in stop_words and len(w) > 2]
+                
+                if filtered_words:
+                    common_words = [word for word, count in Counter(filtered_words).most_common(12)]
+                    # نیوز چینل کے لحاظ سے سمارٹ کی ورڈز کا اضافہ
+                    news_tags = ["breaking news", "report", "24 news archive"]
+                    final_tags = list(dict.fromkeys(common_words + news_tags))
+                    tags_string = ", ".join(final_tags[:15])
                 else:
-                    tags_string = "news, update, broadcast, video, archive"
+                    tags_string = "breaking news, news update, video report, 24 news archive, current affairs"
 
                 st.success("Tags generated successfully! Copy the tags from the box below.")
                 
                 st.markdown("### Generated Tags (Ready to Copy):")
                 st.code(tags_string, language="text")
 
-                with st.expander("View Full Audio Transcript"):
-                    st.write(transcript_text if transcript_text else "No speech detected in audio.")
+                with st.expander("View Full Audio Transcript & Details"):
+                    st.write(f"**File Name Analyzed:** {file_name}")
+                    st.write(f"**Audio Transcript:** {transcript_text if transcript_text else 'No distinct speech detected in audio track.'}")
 
             except Exception as e:
                 st.error(f"Processing error: {e}")
