@@ -4,9 +4,55 @@ import tempfile
 import os
 import time
 
-st.set_page_config(page_title="24 News Channel Video Tagging System", layout="wide")
+# Page Configuration
+st.set_page_config(
+    page_title="24 News Channel Video Tagging System", 
+    page_icon="📺", 
+    layout="wide"
+)
+
+# Professional Custom CSS Styling
+st.markdown("""
+    <style>
+    .main {
+        background-color: #f4f6f9;
+    }
+    .stApp {
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+    h1 {
+        color: #1f2937;
+        font-family: 'Helvetica Neue', sans-serif;
+        font-weight: 700;
+        font-size: 2.2rem;
+    }
+    .upload-text {
+        color: #4b5563;
+        font-size: 1.1rem;
+        margin-bottom: 1rem;
+    }
+    /* Customizing buttons */
+    .stButton>button {
+        width: 100%;
+        background-color: #2563eb;
+        color: white;
+        font-weight: 600;
+        border-radius: 8px;
+        padding: 0.6rem 1rem;
+        border: none;
+        transition: all 0.3s ease;
+    }
+    .stButton>button:hover {
+        background-color: #1d4ed8;
+        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+    }
+    </style>
+""", unsafe_allow_html=True)
+
+# App Header
 st.title("📺 24 News Channel Video Metadata & Tagging System")
-st.write("Upload video, get automated English tags instantly, and save them to your local archive.")
+st.markdown('<p class="upload-text">Upload video, get automated English tags instantly, and save them to your local archive.</p>', unsafe_allow_html=True)
 
 # Streamlit Secrets سے API Key حاصل کرنا
 api_key = st.secrets.get("GEMINI_API_KEY")
@@ -43,7 +89,7 @@ if api_key:
                         # 2. گوگل سرور پر اپلوڈ
                         video_file = client.files.upload(file=tmp_file_path)
                         
-                        # 3. آٹو ری ٹرائی لاجک (تاکہ سرور بزی ہونے پر ایرر نہ آئے)
+                        # 3. آٹو ری ٹرائی لاجک
                         response = None
                         max_retries = 3
                         for attempt in range(max_retries):
@@ -55,7 +101,7 @@ if api_key:
                                 break
                             except Exception as e:
                                 if "503" in str(e) and attempt < max_retries - 1:
-                                    time.sleep(3) # 3 سیکنڈ انتظار کر کے دوبارہ کوشش کرے گا
+                                    time.sleep(3)
                                 else:
                                     raise e
 
@@ -69,7 +115,7 @@ if api_key:
                         st.error(f"Processing error: {inner_e}")
 
                     finally:
-                        # 5. خودکار صفائی (سرور اور لوکل دونوں جگہ سے ویڈیو ڈیلیٹ کرنا)
+                        # 5. خودکار صفائی
                         if video_file:
                             try:
                                 client.files.delete(name=video_file.name)
@@ -83,3 +129,5 @@ if api_key:
         st.error(f"API Key configuration error: {e}")
 else:
     st.warning("Please add GEMINI_API_KEY in Streamlit Secrets or enter it in the sidebar.")
+
+<FollowUp>Would you like to adjust any specific color tones (such as matching your exact corporate studio branding) or add more features?</FollowUp>
