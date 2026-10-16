@@ -48,7 +48,7 @@ st.markdown("""
         border-color: #38bdf8;
     }
     
-    /* Upload Label Text Color Fix (ویڈیو فائل اپ لوڈ کریں - Title Fix) */
+    /* Upload Label Text Color Fix */
     div[data-testid="stFileUploader"] label, 
     div[data-testid="stWidgetLabel"] p,
     .stFileUploader label p {
@@ -57,13 +57,11 @@ st.markdown("""
         font-weight: 600 !important;
     }
     
-    /* Upload Box Subtext (200MB per file...) */
     div[data-testid="stFileUploader"] small,
     div[data-testid="stFileUploader"] span {
         color: #94a3b8 !important;
     }
     
-    /* Upload Button Inside Widget */
     div[data-testid="stFileUploader"] button {
         background-color: #38bdf8 !important;
         color: #0f172a !important;
@@ -90,12 +88,14 @@ st.markdown("""
         transform: translateY(-1px);
     }
     
-    /* Output Box */
-    pre {
-        background-color: #1e293b !important;
-        border: 1px solid #334155 !important;
+    /* Generated Tags Output Box Styling (Bright & Clear) */
+    pre, code {
+        background-color: #ffffff !important;
+        color: #0f172a !important;
+        font-weight: bold !important;
+        font-size: 1.1rem !important;
+        border: 2px solid #38bdf8 !important;
         border-radius: 10px !important;
-        color: #38bdf8 !important;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -139,6 +139,7 @@ if uploaded_file is not None:
 
                 st.success("ٹیگز کامیابی سے تیار ہو گئے ہیں!")
                 
+                # جنریٹ شدہ ٹیگز کا باکس اب واضح سفید پس منظر اور گہرے سیاہ حروف کے ساتھ نظر آئے گا
                 st.markdown("### 📝 جنریٹ شدہ ٹیگز:")
                 st.code(tags_string, language="text")
 
